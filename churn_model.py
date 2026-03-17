@@ -6,10 +6,22 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
 import pickle
+import os
 
 
 # dataset
-df = pd.read_csv('telco.csv')
+base_dir = os.path.dirname(os.path.abspath(__file__))
+csv_path = os.path.join(base_dir, 'telco.csv')
+
+if not os.path.exists(csv_path):
+    available_csvs = [f for f in os.listdir(base_dir) if f.endswith('.csv')]
+    raise FileNotFoundError(
+        f"\n\nERROR: Could not find 'telco.csv' in {base_dir}.\n"
+        f"Available CSV files in this folder: {available_csvs}\n"
+        "Please rename your dataset to 'telco.csv' or change the filename in this script."
+    )
+
+df = pd.read_csv(csv_path)
 
 
 # data cleaning
@@ -26,7 +38,7 @@ for column in df.columns:
 
 
 # features
-X = df.drop("Churn", axis=1)
+X = df[['tenure', 'MonthlyCharges', 'TotalCharges', 'Contract', 'InternetService']]
 y = df["Churn"]
 
 
@@ -47,4 +59,5 @@ print("Accuracy:", accuracy_score(y_test, y_pred))
 
 
 # saving
-pickle.dump(model, open("model.pkl", "wb"))
+model_path = os.path.join(base_dir, "model.pkl")
+pickle.dump(model, open(model_path, "wb"))
