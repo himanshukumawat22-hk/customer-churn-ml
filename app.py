@@ -12,7 +12,7 @@ model = pickle.load(open(model_path, "rb"))
 
 # Sidebar Navigation
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Home", "Prediction", "About"])
+page = st.sidebar.radio("Go to", ["Home", "Dashboard", "Prediction", "About"])
 
 if page == "Home":
     st.title("Customer Churn AI Assistant 🤖")
@@ -27,6 +27,22 @@ if page == "Home":
     3. Click Predict to see if the customer is at risk of churning.
     """)
     st.info("👈 Select a page from the sidebar to continue")
+
+elif page == "Dashboard":
+    st.title("Data Analytics Dashboard 📊")
+    st.write("A quick look at our historical telecommunications dataset.")
+    
+    csv_path = os.path.join(base_dir, "telco.csv")
+    if os.path.exists(csv_path):
+        df = pd.read_csv(csv_path)
+        
+        st.subheader("Overall Customer Churn")
+        st.bar_chart(df['Churn'].value_counts(), color="#ff4b4b")
+        
+        st.subheader("Contract Types Distribution")
+        st.bar_chart(df['Contract'].value_counts(), color="#4b8bff")
+    else:
+        st.warning("Historical data file (telco.csv) not found for visualizations.")
 
 elif page == "Prediction":
     st.title("Predict Customer Churn")
@@ -64,13 +80,19 @@ elif page == "Prediction":
         try:
             # Make prediction directly
             prediction = model.predict(df_features)
+            probability = model.predict_proba(df_features)[0][1] * 100 # Get percentage of churn
             pred_value = int(prediction[0])
+            
+            # Visual Probability Meter
+            st.subheader("Prediction Results")
+            st.metric("Churn Risk Probability", f"{probability:.1f}%")
+            st.progress(int(probability)) # Shows a loading-style bar
             
             # Display result
             if pred_value == 1:
-                st.error("⚠️ High Risk: This customer is likely to churn!")
+                st.error(f"⚠️ High Risk: This customer is highly likely to churn.")
             else:
-                st.success("✅ Safe: This customer is likely to stay.")
+                st.success(f"✅ Safe: This customer is likely to stay.")
                 
         except Exception as e:
             st.error(f"Error making prediction: {e}")
