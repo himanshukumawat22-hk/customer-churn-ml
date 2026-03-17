@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Churn Prediction</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #ffffff;
+            padding: 20px;
+        }
+
+        /* Background decorative blur shapes */
+        .bg-shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: 0;
+        }
+        .shape1 {
+            top: 10%;
+            left: 20%;
+            width: 300px;
+            height: 300px;
+            background: rgba(43, 192, 228, 0.4);
+        }
+        .shape2 {
+            bottom: 10%;
+            right: 20%;
+            width: 400px;
+            height: 400px;
+            background: rgba(234, 84, 85, 0.3);
+        }
+
+        .glass-container {
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+            font-size: 1.8rem;
+            letter-spacing: 1px;
+            background: -webkit-linear-gradient(#fff, #a1c4fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            color: #d1d5db;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            color: #fff;
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            border-color: #4facfe;
+            box-shadow: 0 0 10px rgba(79, 172, 254, 0.5);
+            background: rgba(0, 0, 0, 0.4);
+        }
+
+        option {
+            background: #203a43;
+            color: white;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 15px;
+            margin-top: 10px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 242, 254, 0.4);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        /* Results area */
+        #result-box {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: 600;
+            display: none;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .alert-danger {
+            background: rgba(234, 84, 85, 0.2);
+            border: 1px solid #ea5455;
+            color: #ff9999;
+            box-shadow: 0 0 15px rgba(234, 84, 85, 0.3);
+        }
+
+        .alert-success {
+            background: rgba(40, 199, 111, 0.2);
+            border: 1px solid #28c76f;
+            color: #8affb1;
+            box-shadow: 0 0 15px rgba(40, 199, 111, 0.3);
+        }
+
+        .loader {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top: 3px solid #fff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Decorative background blobs -->
+    <div class="bg-shape shape1"></div>
+    <div class="bg-shape shape2"></div>
+
+    <div class="glass-container">
+        <h1>Customer Churn AI</h1>
+        
+        <form id="churnForm">
+            <div class="form-group">
+                <label for="tenure">Tenure (months)</label>
+                <input type="number" id="tenure" min="0" placeholder="e.g. 12" required>
+            </div>
+
+            <div class="form-group">
+                <label for="monthlyCharges">Monthly Charges ($)</label>
+                <input type="number" step="0.01" id="monthlyCharges" placeholder="e.g. 75.50" required>
+            </div>
+
+            <div class="form-group">
+                <label for="totalCharges">Total Charges ($)</label>
+                <input type="number" step="0.01" id="totalCharges" placeholder="e.g. 900.00" required>
+            </div>
+
+            <div class="form-group">
+                <label for="contract">Contract</label>
+                <select id="contract" required>
+                    <option value="0">Month-to-month</option>
+                    <option value="1">One year</option>
+                    <option value="2">Two year</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="internetService">Internet Service</label>
+                <select id="internetService" required>
+                    <option value="0">DSL</option>
+                    <option value="1">Fiber optic</option>
+                    <option value="2">No Internet Service</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn-submit" id="submitBtn">
+                <span id="btnText">Predict Churn</span>
+                <div class="loader" id="loader"></div>
+            </button>
+        </form>
+
+        <div id="result-box"></div>
+    </div>
+
+    <script>
+        document.getElementById('churnForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // UI State management
+            const btnText = document.getElementById('btnText');
+            const loader = document.getElementById('loader');
+            const resultBox = document.getElementById('result-box');
+            
+            btnText.style.display = 'none';
+            loader.style.display = 'inline-block';
+            resultBox.style.display = 'none';
+            resultBox.className = ''; 
+
+            // Data collection
+            const payload = {
+                tenure: parseFloat(document.getElementById('tenure').value),
+                MonthlyCharges: parseFloat(document.getElementById('monthlyCharges').value),
+                TotalCharges: parseFloat(document.getElementById('totalCharges').value),
+                Contract: parseInt(document.getElementById('contract').value),
+                InternetService: parseInt(document.getElementById('internetService').value)
+            };
+
+            try {
+                // Send to Flask API
+                const response = await fetch('http://127.0.0.1:5001/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                resultBox.style.display = 'block';
+                if (response.ok) {
+                    if (data.prediction === 1) {
+                        resultBox.innerHTML = '⚠️ High Risk: Customer is likely to churn!';
+                        resultBox.className = 'alert-danger';
+                    } else {
+                        resultBox.innerHTML = '✅ Safe: Customer is likely to stay.';
+                        resultBox.className = 'alert-success';
+                    }
+                } else {
+                    resultBox.innerHTML = '❌ Error: ' + (data.details || data.error || 'Server error');
+                    resultBox.className = 'alert-danger';
+                }
+            } catch (err) {
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = '❌ Connection Failed! Make sure your Flask API is running.';
+                resultBox.className = 'alert-danger';
+            } finally {
+                // Reset UI state
+                btnText.style.display = 'inline-block';
+                loader.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
