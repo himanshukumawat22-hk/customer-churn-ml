@@ -10,39 +10,82 @@ base_dir = os.path.dirname(os.path.abspath(__file__))
 model_path = os.path.join(base_dir, "model.pkl")
 model = pickle.load(open(model_path, "rb"))
 
-# create title for the web application
-st.title("Customer Churn Prediction App")
+# Sidebar Navigation
+st.sidebar.title("Navigation")
+page = st.sidebar.radio("Go to", ["Home", "Prediction", "About"])
 
-# create input fields for user data
-tenure = st.number_input("Tenure (months)", min_value=0)
-monthly_charges = st.number_input("Monthly Charges")
-total_charges = st.number_input("Total Charges")
-contract = st.selectbox("Contract", [0, 1, 2])
-internet_service = st.selectbox("Internet Service", [0, 1, 2])
+if page == "Home":
+    st.title("Customer Churn AI Assistant 🤖")
+    st.write("### Welcome to the Telecommunications Churn Predictor!")
+    st.write("""
+    This application helps telecommunication businesses identify customers who are highly likely to leave (churn). 
+    By identifying these customers early, companies can offer targeted promotions and retain their business.
+    
+    **How to use this app:**
+    1. Go to the **Prediction** page from the sidebar.
+    2. Enter the customer's billing and service information.
+    3. Click Predict to see if the customer is at risk of churning.
+    """)
+    st.info("👈 Select a page from the sidebar to continue")
 
+elif page == "Prediction":
+    st.title("Predict Customer Churn")
+    st.write("Enter the customer details below to predict their likelihood of churning.")
 
-# create prediction button
-if st.button("Predict Churn"):
+    # Mapping readable text to model numeric values
+    contract_map = {"Month-to-month": 0, "One year": 1, "Two year": 2}
+    internet_map = {"DSL": 0, "Fiber optic": 1, "No Internet Service": 2}
 
-    # Prepare the features exactly as the model expects
-    df_features = pd.DataFrame([{
-        'tenure': float(tenure),
-        'MonthlyCharges': float(monthly_charges),
-        'TotalCharges': float(total_charges),
-        'Contract': int(contract),
-        'InternetService': int(internet_service)
-    }])
+    # create input fields for user data in columns for better layout
+    col1, col2 = st.columns(2)
+    with col1:
+        tenure = st.number_input("Tenure (months)", min_value=0)
+        monthly_charges = st.number_input("Monthly Charges ($)", min_value=0.0)
+        total_charges = st.number_input("Total Charges ($)", min_value=0.0)
+    
+    with col2:
+        contract_sel = st.selectbox("Contract Type", list(contract_map.keys()))
+        internet_sel = st.selectbox("Internet Service", list(internet_map.keys()))
 
-    try:
-        # Make prediction directly
-        prediction = model.predict(df_features)
-        pred_value = int(prediction[0])
-        
-        # Display result
-        if pred_value == 1:
-            st.error("Customer is likely to churn")
-        else:
-            st.success("Customer will stay")
+    contract = contract_map[contract_sel]
+    internet_service = internet_map[internet_sel]
+
+    # create prediction button
+    if st.button("Predict Churn", use_container_width=True):
+        # Prepare the features exactly as the model expects
+        df_features = pd.DataFrame([{
+            'tenure': float(tenure),
+            'MonthlyCharges': float(monthly_charges),
+            'TotalCharges': float(total_charges),
+            'Contract': int(contract),
+            'InternetService': int(internet_service)
+        }])
+
+        try:
+            # Make prediction directly
+            prediction = model.predict(df_features)
+            pred_value = int(prediction[0])
             
-    except Exception as e:
-        st.error(f"Error making prediction: {e}")
+            # Display result
+            if pred_value == 1:
+                st.error("⚠️ High Risk: This customer is likely to churn!")
+            else:
+                st.success("✅ Safe: This customer is likely to stay.")
+                
+        except Exception as e:
+            st.error(f"Error making prediction: {e}")
+
+elif page == "About":
+    st.title("About This Project")
+    st.write("""
+    **Machine Learning Model:** Random Forest Classifier
+    
+    **Features used:** 
+    * Tenure
+    * Monthly Charges
+    * Total Charges
+    * Contract Type 
+    * Internet Service Type
+    
+    This tool is designed to provide actionable insights for customer retention teams.
+    """)
