@@ -529,43 +529,81 @@ elif page == "Prediction Engine":
                 st.markdown("##### 🔍 Data Preview:")
                 st.dataframe(batch_df.head(), use_container_width=True)
                 
+                st.markdown("##### 🔀 Map Your Columns")
+                st.markdown("<p style='color: #94a3b8; font-size: 0.85rem;'>Map your dataset's columns to the engine's required features. Unmapped features default to 0.</p>", unsafe_allow_html=True)
+                
+                required_cols = ['tenure', 'MonthlyCharges', 'TotalCharges', 'Contract', 'InternetService']
+                col_mappings = {}
+                
+                # Create a 5-column grid for user-friendly mapping
+                map_cols = st.columns(len(required_cols))
+                
+                for i, req_col in enumerate(required_cols):
+                    with map_cols[i]:
+                        # Try to smartly auto-select mapping based on case-insensitive matches
+                        guess_idx = 0
+                        options = ["(Ignore / Default 0)"] + list(batch_df.columns)
+                        for j, c in enumerate(batch_df.columns):
+                            if req_col.lower() in c.lower():
+                                guess_idx = j + 1
+                                break
+                        
+                        col_mappings[req_col] = st.selectbox(
+                            f"-> {req_col}", 
+                            options=options,
+                            index=guess_idx,
+                            key=f"map_{req_col}"
+                        )
+                
                 if st.button("⚡ EXECUTE BATCH PROTOCOL", use_container_width=True, key="batch_btn"):
                     with st.spinner("Scoring cohort through Random Forest Engine..."):
-                        # Data preprocessing safely
-                        required_cols = ['tenure', 'MonthlyCharges', 'TotalCharges', 'Contract', 'InternetService']
-                        missing_cols = [col for col in required_cols if col not in batch_df.columns]
+                        score_df = batch_df.copy()
                         
-                        if missing_cols:
-                            st.error(f"⚠️ Missing required columns for prediction: **{', '.join(missing_cols)}**")
-                        else:
-                            score_df = batch_df.copy()
-                            # Ensure mappings are correctly formatted for model ingestion
-                            if score_df['Contract'].dtype == 'O':
-                                score_df['Contract'] = score_df['Contract'].map(contract_map).fillna(0)
-                            if score_df['InternetService'].dtype == 'O':
-                                net_map = {"DSL": 0, "Fiber optic": 1, "No": 2, "No Internet Service": 2}
-                                score_df['InternetService'] = score_df['InternetService'].map(net_map).fillna(0)
-                                
-                            score_df['TotalCharges'] = pd.to_numeric(score_df['TotalCharges'], errors='coerce').fillna(0)
+                        # Map columns dynamically based on user selections
+                        for req_col, mapped_col in col_mappings.items():
+                            if mapped_col != "(Ignore / Default 0)":
+                                score_df[req_col] = batch_df[mapped_col]
+                            else:
+                                score_df[req_col] = 0
+                        
+                        # Perform deep string normalization and safe numerical casts
+                        score_df['tenure'] = pd.to_numeric(score_df['tenure'], errors='coerce').fillna(0)
+                        score_df['MonthlyCharges'] = pd.to_numeric(score_df['MonthlyCharges'], errors='coerce').fillna(0)
+                        score_df['TotalCharges'] = pd.to_numeric(score_df['TotalCharges'], errors='coerce').fillna(0)
+                        
+                        if score_df['Contract'].dtype == 'O':
+                            clean_contract = score_df['Contract'].astype(str).str.lower().str.replace('-', ' ').str.strip()
+                            robust_c_map = {"month to month": 0, "one year": 1, "two year": 2}
+                            score_df['Contract'] = clean_contract.map(robust_c_map).fillna(0)
+                        score_df['Contract'] = pd.to_numeric(score_df['Contract'], errors='coerce').fillna(0).astype(int)
+                        
+                        if score_df['InternetService'].dtype == 'O':
+                            clean_net = score_df['InternetService'].astype(str).str.lower().str.strip()
+                            robust_net_map = {"dsl": 0, "fiber optic": 1, "no": 2, "no internet service": 2}
+                            score_df['InternetService'] = clean_net.map(robust_net_map).fillna(0)
+                        score_df['InternetService'] = pd.to_numeric(score_df['InternetService'], errors='coerce').fillna(0).astype(int)
+                        
+                        X_batch = score_df[required_cols]
+                        probs = model.predict_proba(X_batch)[:, 1] * 100
+                        
+                        batch_df['Churn_Risk_Score (%)'] = np.round(probs, 1)
+                        batch_df['Risk_Level'] = ['High Risk' if p > 50 else 'Safe' for p in probs]
+                        
+                        st.success("✅ Batch scoring completed successfully!")
+                        st.markdown("<hr style='border:1px solid rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
+                        
+                        res_b1, res_b2 = st.columns([2, 1])
+                        with res_b1:
+                            # Safely attempt to display the original dataset combined with the new risk columns
+                            display_cols = [c for c in ['tenure', 'MonthlyCharges', 'Contract'] if c in batch_df.columns]
+                            display_cols += ['Churn_Risk_Score (%)', 'Risk_Level']
+                            st.dataframe(batch_df[display_cols].head(15), use_container_width=True)
+                        with res_b2:
+                            high_risk_count = len(batch_df[batch_df['Risk_Level'] == 'High Risk'])
+                            st.markdown(render_glass_metric("At Risk Accounts", f"{high_risk_count}"), unsafe_allow_html=True)
                             
-                            X_batch = score_df[required_cols]
-                            probs = model.predict_proba(X_batch)[:, 1] * 100
-                            
-                            batch_df['Churn_Risk_Score (%)'] = np.round(probs, 1)
-                            batch_df['Risk_Level'] = ['High Risk' if p > 50 else 'Safe' for p in probs]
-                            
-                            st.success("✅ Batch scoring completed successfully!")
-                            st.markdown("<hr style='border:1px solid rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
-                            
-                            res_b1, res_b2 = st.columns([2, 1])
-                            with res_b1:
-                                st.dataframe(batch_df[['tenure', 'MonthlyCharges', 'Contract', 'Churn_Risk_Score (%)', 'Risk_Level']].head(15), use_container_width=True)
-                            with res_b2:
-                                high_risk_count = len(batch_df[batch_df['Risk_Level'] == 'High Risk'])
-                                st.markdown(render_glass_metric("At Risk Accounts", f"{high_risk_count}"), unsafe_allow_html=True)
-                                
-                            csv_export = batch_df.to_csv(index=False).encode('utf-8')
-                            st.download_button(label="📥 Download Scored Cohort Report (CSV)", data=csv_export, file_name="scored_cohort.csv", mime="text/csv", use_container_width=True)
+                        csv_export = batch_df.to_csv(index=False).encode('utf-8')
+                        st.download_button(label="📥 Download Scored Cohort Report (CSV)", data=csv_export, file_name="scored_cohort.csv", mime="text/csv", use_container_width=True)
                             
             except Exception as e:
                 st.error(f"Error processing batch file: {e}")
