@@ -272,8 +272,8 @@ elif page == "Dashboard":
                     churn_counts = df['Churn'].value_counts().reset_index()
                     churn_counts.columns = ['Churn', 'Count']
                     fig_churn = px.pie(churn_counts, values='Count', names='Churn', hole=0.6, 
-                                       title="Churn Distribution", 
-                                       color_discrete_sequence=["#667eea", "#ea5455"])
+                                        title="Churn Distribution", 
+                                        color_discrete_sequence=["#667eea", "#ea5455"])
                     fig_churn.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#cbd5e1")
                     st.plotly_chart(fig_churn, use_container_width=True)
                 else:
@@ -283,9 +283,9 @@ elif page == "Dashboard":
                     contract_counts = df['Contract'].value_counts().reset_index()
                     contract_counts.columns = ['Contract Type', 'Customers']
                     fig_contract = px.bar(contract_counts, x='Contract Type', y='Customers',
-                                          title="Cohort by Contract Type",
-                                          color='Contract Type',
-                                          color_discrete_sequence=["#4facfe", "#43e97b", "#fa709a"])
+                                            title="Cohort by Contract Type",
+                                            color='Contract Type',
+                                            color_discrete_sequence=["#4facfe", "#43e97b", "#fa709a"])
                     fig_contract.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#cbd5e1", showlegend=False)
                     st.plotly_chart(fig_contract, use_container_width=True)
                 else:
@@ -296,10 +296,10 @@ elif page == "Dashboard":
             st.dataframe(df.head(100), use_container_width=True)
             csv_data = df.to_csv(index=False).encode('utf-8')
             st.download_button(label="📥 Download Full Report (CSV)",
-                               data=csv_data,
-                               file_name="churn_report.csv",
-                               mime="text/csv")
-                               
+                                data=csv_data,
+                                file_name="churn_report.csv",
+                                mime="text/csv")
+                                
         with tab2:
             st.markdown("<br>", unsafe_allow_html=True)
             insights = generate_ai_insights(df)
