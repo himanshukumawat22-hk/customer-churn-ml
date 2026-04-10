@@ -15,14 +15,15 @@ st.markdown("""
     <style>
     /* Premium SaaS Dark Theme & Glassmorphism */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap');
     
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
     }
     
-    /* Main Background Gradient */
+    /* Main Background Gradient - Sci-Fi Vibe */
     [data-testid="stAppViewContainer"] {
-        background: radial-gradient(circle at top left, #1a1a2e 0%, #0f2027 50%, #203a43 100%);
+        background: radial-gradient(circle at top left, #0b0f19 0%, #0f2027 50%, #1a1a2e 100%);
         color: #e2e8f0;
     }
     
@@ -36,18 +37,21 @@ st.markdown("""
     
     /* Buttons Styling */
     div.stButton > button:first-child {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
         color: #ffffff;
-        font-weight: 600;
+        font-family: 'Orbitron', sans-serif;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
         border: none;
         border-radius: 8px;
         padding: 0.6rem 1.5rem;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
+        box-shadow: 0 0 15px rgba(0, 242, 254, 0.4);
     }
     div.stButton > button:first-child:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(118, 75, 162, 0.5);
+        box-shadow: 0 0 30px rgba(0, 242, 254, 0.8);
     }
     
     /* File Uploader styling */
@@ -86,13 +90,14 @@ st.markdown("""
         -webkit-backdrop-filter: blur(10px);
         border-radius: 16px;
         padding: 24px;
-        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 8px 32px 0 rgba(0, 242, 254, 0.05);
         margin-bottom: 20px;
         transition: transform 0.3s ease;
     }
     .glass-card:hover {
         transform: translateY(-5px);
-        border-color: rgba(255, 255, 255, 0.1);
+        border-color: rgba(0, 242, 254, 0.3);
+        box-shadow: 0 8px 32px 0 rgba(0, 242, 254, 0.15);
     }
     .metric-title {
         color: #94a3b8;
@@ -102,13 +107,15 @@ st.markdown("""
         margin-bottom: 8px;
     }
     .metric-value {
+        font-family: 'Orbitron', sans-serif;
         color: #ffffff;
         font-size: 2.2rem;
-        font-weight: 700;
+        font-weight: 900;
         margin: 0;
-        background: -webkit-linear-gradient(45deg, #fff, #94a3b8);
+        background: -webkit-linear-gradient(45deg, #00f2fe, #4facfe);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        text-shadow: 0px 0px 15px rgba(0, 242, 254, 0.3);
     }
     
     /* 3D Neumorphic Sidebar Radio Buttons */
@@ -127,13 +134,25 @@ st.markdown("""
         box-shadow: 6px 6px 12px rgba(0,0,0,0.4), -6px -6px 12px rgba(255,255,255,0.04);
     }
     [data-testid="stSidebar"] div[role="radiogroup"] > label[data-checked="true"] {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #00f2fe 0%, #4facfe 100%);
         box-shadow: inset 4px 4px 10px rgba(0,0,0,0.3);
         border: none;
+        color: white;
     }
     [data-testid="stSidebar"] div[role="radiogroup"] > label p {
         font-weight: 600;
         font-size: 1.05rem;
+    }
+    
+    /* Pulse Animation for System Status */
+    @keyframes pulse-neon {
+        0% { box-shadow: 0 0 5px #28c76f; }
+        50% { box-shadow: 0 0 20px #28c76f, 0 0 30px #28c76f; }
+        100% { box-shadow: 0 0 5px #28c76f; }
+    }
+    .status-dot {
+        width: 12px; height: 12px; border-radius: 50%; background: #28c76f;
+        animation: pulse-neon 2s infinite;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -188,17 +207,31 @@ model, base_dir = load_model()
 
 # Sidebar Navigation
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/6105/6105565.png", width=60) # Placeholder AI Logo
-    st.markdown("## **ChurnAI** Workspace")
+    # Gamified User Profile
+    st.markdown("""
+    <div style="background: rgba(0, 242, 254, 0.05); border: 1px solid rgba(0, 242, 254, 0.2); padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 15px; margin-bottom: 20px; box-shadow: 0 0 15px rgba(0,242,254,0.1);">
+        <img src="https://cdn-icons-png.flaticon.com/512/4140/4140048.png" style="width: 50px; border-radius: 50%; border: 2px solid #00f2fe;">
+        <div>
+            <div style="color: #00f2fe; font-family: 'Orbitron', sans-serif; font-size: 1.1rem; font-weight: 700;">AGENT 007</div>
+            <div style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase;">Rank: Master Analyst</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("<h2 style='font-family:Orbitron;'>TERMINAL MENU</h2>", unsafe_allow_html=True)
     st.markdown("---")
     page = st.radio("Navigation", ["Home", "Dashboard", "Prediction Engine", "About System"], label_visibility="collapsed")
     st.markdown("---")
     
+    # Global Threat Level Metric
+    st.markdown(render_glass_metric("Global Threat Level", "DEFCON 3"), unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    
     # New sleek system status toggle/indicator
-    st.markdown("### System Status")
+    st.markdown("<h3 style='font-family:Orbitron; font-size:1rem; color:#cbd5e1;'>SYSTEM STATUS</h3>", unsafe_allow_html=True)
     st.markdown("""
     <div style="display:flex; align-items:center; gap: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05);">
-        <div style="width: 12px; height: 12px; border-radius: 50%; background: #28c76f; box-shadow: 0 0 8px #28c76f;"></div>
+        <div class="status-dot"></div>
         <span style="color: #cbd5e1; font-weight: 500; font-size:0.9rem;">Model Engine Active</span>
     </div>
     <br>
@@ -214,15 +247,15 @@ with st.sidebar:
 
 # --- PAGE: HOME ---
 if page == "Home":
-    st.markdown("<h1 style='font-weight: 700; letter-spacing: -1px;'>Predict & Prevent Customer Churn.</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='font-family: Orbitron; font-weight: 900; letter-spacing: 2px; color: #00f2fe; text-shadow: 0 0 20px rgba(0,242,254,0.5);'>NEURAL CHURN PREDICTOR</h1>", unsafe_allow_html=True)
     st.markdown("<p style='color: #94a3b8; font-size: 1.2rem; margin-bottom: 30px;'>Turn reactive losses into proactive retention with enterprise-grade machine learning.</p>", unsafe_allow_html=True)
     
     # Hero Section Grid
     col1, col2 = st.columns([1.2, 1])
     with col1:
         st.markdown("""
-        <div class="glass-card">
-            <h3 style="margin-top: 0; color: #fff;">Why use ChurnAI?</h3>
+        <div class="glass-card" style="border-left: 4px solid #00f2fe;">
+            <h3 style="margin-top: 0; color: #fff; font-family:Orbitron;">Mission Objective</h3>
             <p style="color: #cbd5e1; line-height: 1.6;">
             Acquiring a new customer can cost five times more than retaining an existing one. 
             ChurnAI connects your historical telecommunications data with advanced Random Forest algorithms 
@@ -238,8 +271,8 @@ if page == "Home":
         
     with col2:
         st.markdown("""
-        <div class="glass-card" style="border-top: 4px solid #667eea;">
-            <h3 style="margin-top: 0; color: #fff;">🚀 Quick Start</h3>
+        <div class="glass-card" style="background: rgba(0,242,254,0.05); border: 1px solid rgba(0,242,254,0.2);">
+            <h3 style="margin-top: 0; color: #00f2fe; font-family:Orbitron;">🚀 Initialization Protocol</h3>
             <ol style="color: #cbd5e1; line-height: 2;">
                 <li>Navigate to the <b>Dashboard</b> tab.</li>
                 <li>Upload your latest customer CSV file.</li>
@@ -252,7 +285,7 @@ if page == "Home":
 
 # --- PAGE: DASHBOARD ---
 elif page == "Dashboard":
-    st.markdown("<h1 style='font-weight: 700;'>Data Analytics Workspace</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='font-family:Orbitron; font-weight: 700;'>Data Analytics Workspace</h1>", unsafe_allow_html=True)
     st.markdown("<p style='color: #94a3b8;'>Analyze macro trends, view visual cohort breakdowns, and extract AI Insights.</p>", unsafe_allow_html=True)
     
     # Toolbar
@@ -309,7 +342,7 @@ elif page == "Dashboard":
                     churn_counts.columns = ['Churn', 'Count']
                     fig_churn = px.pie(churn_counts, values='Count', names='Churn', hole=0.6, 
                                         title="Churn Distribution", 
-                                        color_discrete_sequence=["#667eea", "#ea5455"])
+                                        color_discrete_sequence=["#00f2fe", "#ea5455"])
                     fig_churn.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#cbd5e1")
                     st.plotly_chart(fig_churn, use_container_width=True)
                 else:
@@ -321,7 +354,7 @@ elif page == "Dashboard":
                     fig_contract = px.bar(contract_counts, x='Contract Type', y='Customers',
                                             title="Cohort by Contract Type",
                                             color='Contract Type',
-                                            color_discrete_sequence=["#4facfe", "#43e97b", "#fa709a"])
+                                            color_discrete_sequence=["#00f2fe", "#43e97b", "#fa709a"])
                     fig_contract.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#cbd5e1", showlegend=False)
                     st.plotly_chart(fig_contract, use_container_width=True)
                 else:
@@ -341,7 +374,7 @@ elif page == "Dashboard":
             insights = generate_ai_insights(df)
             for ins in insights:
                 st.markdown(f"""
-                <div class="glass-card" style="border-left: 4px solid #4facfe;">
+                <div class="glass-card" style="border-left: 4px solid #00f2fe; background: linear-gradient(90deg, rgba(0,242,254,0.1) 0%, rgba(0,0,0,0) 100%);">
                     {ins}
                 </div>
                 """, unsafe_allow_html=True)
@@ -349,7 +382,7 @@ elif page == "Dashboard":
 
 # --- PAGE: PREDICTION ENGINE ---
 elif page == "Prediction Engine":
-    st.markdown("<h1 style='font-weight: 700;'>Prediction Engine</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='font-family:Orbitron; font-weight: 700; color:#00f2fe;'>Prediction Engine Grid</h1>", unsafe_allow_html=True)
     st.markdown("<p style='color: #94a3b8;'>Simulate individual customer profiles or upload a dataset for batch AI risk assessments.</p>", unsafe_allow_html=True)
 
     # Mapping readable text to model numeric values
@@ -363,7 +396,7 @@ elif page == "Prediction Engine":
         # Form Card
         with st.container():
             st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-            st.markdown("### 🛠️ Configure Customer Parameters")
+            st.markdown("<h3 style='font-family:Orbitron;'>🛠️ Configure Target Parameters</h3>", unsafe_allow_html=True)
             
             col1, col2 = st.columns(2)
             with col1:
@@ -384,7 +417,7 @@ elif page == "Prediction Engine":
         contract = contract_map[contract_sel]
         internet_service = internet_map[internet_sel]
         
-        if st.button("🚀 Execute Risk Analysis", use_container_width=True):
+        if st.button("⚡ EXECUTE NEURAL SCAN", use_container_width=True):
             with st.spinner("Connecting to Random Forest Engine..."):
                 # Prepare the features exactly as the model expects
                 df_features = pd.DataFrame([{
@@ -401,12 +434,13 @@ elif page == "Prediction Engine":
                     probability = model.predict_proba(df_features)[0][1] * 100 # Get percentage of churn
                     pred_value = int(prediction[0])
                     
-                    st.markdown("<hr style='border:1px solid rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
+                    st.markdown("<hr style='border:1px solid rgba(0,242,254,0.3); box-shadow: 0 0 10px #00f2fe;'>", unsafe_allow_html=True)
+                    st.markdown("<h3 style='font-family:Orbitron; color:#fff; text-align:center;'>SCAN RESULTS COMPILED</h3>", unsafe_allow_html=True)
                     
                     # Advanced Dashboard Results Layout
-                    res_col1, res_col2 = st.columns([1.5, 1])
+                    res_col1, res_col2, res_col3 = st.columns([1, 1, 1.2])
                     
-                    with res_col1:
+                    with res_col2:
                         # Plotly Gauge Chart for Probability
                         fig_gauge = go.Figure(go.Indicator(
                             mode = "gauge+number",
@@ -421,21 +455,49 @@ elif page == "Prediction Engine":
                                 'borderwidth': 2,
                                 'bordercolor': "rgba(255,255,255,0.1)",
                                 'steps': [
-                                    {'range': [0, 30], 'color': "#28c76f"},   # Green
-                                    {'range': [30, 70], 'color': "#ff9f43"},  # Orange
-                                    {'range': [70, 100], 'color': "#ea5455"}  # Red
+                                    {'range': [0, 40], 'color': "rgba(40, 199, 111, 0.6)"},   
+                                    {'range': [40, 70], 'color': "rgba(255, 159, 67, 0.6)"},  
+                                    {'range': [70, 100], 'color': "rgba(234, 84, 85, 0.8)"}  
                                 ]
                             }
                         ))
-                        fig_gauge.update_layout(paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}, height=300)
+                        fig_gauge.update_layout(paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}, height=280, margin=dict(l=10, r=10, t=40, b=10))
                         st.plotly_chart(fig_gauge, use_container_width=True)
                         
-                    with res_col2:
-                        st.markdown("<br><br>", unsafe_allow_html=True)
+                    with res_col1:
+                        # Gamified Radar Chart showing Customer Profile
+                        categories = ['Tenure', 'Monthly Rate', 'Total Spent', 'Contract Length', 'Connectivity']
+                        
+                        # Normalize data for the radar polygon visual
+                        norm_tenure = (tenure / 72) * 100 if tenure > 0 else 5
+                        norm_monthly = (monthly_charges / 120) * 100
+                        norm_total = (total_charges / 8000) * 100 if total_charges <= 8000 else 100
+                        norm_contract = (contract / 2) * 100 if contract > 0 else 5
+                        norm_internet = ((2 - internet_service) / 2) * 100 if internet_service < 2 else 5
+                        
+                        fig_radar = go.Figure()
+                        fig_radar.add_trace(go.Scatterpolar(
+                            r=[norm_tenure, norm_monthly, norm_total, norm_contract, norm_internet],
+                            theta=categories,
+                            fill='toself',
+                            fillcolor='rgba(0, 242, 254, 0.2)',
+                            line=dict(color='#00f2fe', width=2),
+                            name='Target Profile'
+                        ))
+                        fig_radar.update_layout(
+                            polar=dict(radialaxis=dict(visible=False, range=[0, 100]), bgcolor='rgba(0,0,0,0)'),
+                            showlegend=False, paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                            font_color="#cbd5e1", title={'text': "Attribute Web", 'font': {'color': '#94a3b8', 'size': 18}},
+                            height=280, margin=dict(l=30, r=30, t=40, b=10)
+                        )
+                        st.plotly_chart(fig_radar, use_container_width=True)
+                        
+                    with res_col3:
+                        st.markdown("<br>", unsafe_allow_html=True)
                         if pred_value == 1 or probability > 50:
                             st.markdown("""
-                            <div style='background: rgba(234, 84, 85, 0.15); border: 1px solid #ea5455; border-radius: 12px; padding: 20px;'>
-                                <h3 style='color: #ea5455; margin-top:0;'>⚠️ High Risk Profile</h3>
+                            <div style='background: rgba(234, 84, 85, 0.15); border: 1px solid #ea5455; border-radius: 12px; padding: 20px; box-shadow: 0 0 20px rgba(234,84,85,0.2);'>
+                                <h3 style='color: #ea5455; margin-top:0; font-family:Orbitron;'>⚠️ TARGET: UNSTABLE</h3>
                                 <p style='color: #cbd5e1; font-size: 0.95rem;'>Patterns strongly align with historical churn data.</p>
                                 <hr style='border: 0.5px solid rgba(234,84,85,0.3);'>
                                 <b style='color: #fff;'>Action Engine Suggests:</b>
@@ -447,8 +509,8 @@ elif page == "Prediction Engine":
                             """, unsafe_allow_html=True)
                         else:
                             st.markdown("""
-                            <div style='background: rgba(40, 199, 111, 0.15); border: 1px solid #28c76f; border-radius: 12px; padding: 20px;'>
-                                <h3 style='color: #28c76f; margin-top:0;'>✅ Safe Profile</h3>
+                            <div style='background: rgba(40, 199, 111, 0.15); border: 1px solid #28c76f; border-radius: 12px; padding: 20px; box-shadow: 0 0 20px rgba(40,199,111,0.2);'>
+                                <h3 style='color: #28c76f; margin-top:0; font-family:Orbitron;'>✅ TARGET: STABLE</h3>
                                 <p style='color: #cbd5e1; font-size: 0.95rem;'>Customer behavior suggests loyalty and stable revenue.</p>
                                 <hr style='border: 0.5px solid rgba(40,199,111,0.3);'>
                                 <b style='color: #fff;'>Action Engine Suggests:</b>
@@ -475,7 +537,7 @@ elif page == "Prediction Engine":
                 st.markdown("##### 🔍 Data Preview:")
                 st.dataframe(batch_df.head(), use_container_width=True)
                 
-                if st.button("⚡ Run Batch AI Analysis", use_container_width=True, key="batch_btn"):
+                if st.button("⚡ EXECUTE BATCH PROTOCOL", use_container_width=True, key="batch_btn"):
                     with st.spinner("Scoring cohort through Random Forest Engine..."):
                         # Data preprocessing safely
                         required_cols = ['tenure', 'MonthlyCharges', 'TotalCharges', 'Contract', 'InternetService']
@@ -520,7 +582,7 @@ elif page == "Prediction Engine":
 
 # --- PAGE: ABOUT ---
 elif page == "About System":
-    st.markdown("<h1 style='font-weight: 700;'>System Architecture</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='font-family:Orbitron; font-weight: 700;'>System Architecture</h1>", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
     st.write("""
     <div class="glass-card">
