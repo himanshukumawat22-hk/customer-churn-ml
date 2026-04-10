@@ -5,6 +5,7 @@ import pandas as pd
 import os
 import plotly.express as px
 import plotly.graph_objects as go
+import numpy as np
 
 # Configure page settings - MUST BE FIRST
 st.set_page_config(page_title="ChurnAI | Predict & Retain", page_icon="⚡", layout="wide", initial_sidebar_state="expanded")
@@ -109,6 +110,31 @@ st.markdown("""
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
+    
+    /* 3D Neumorphic Sidebar Radio Buttons */
+    [data-testid="stSidebar"] div[role="radiogroup"] > label {
+        background: linear-gradient(145deg, rgba(255,255,255,0.05), rgba(0,0,0,0.2));
+        border-radius: 12px;
+        padding: 12px 20px;
+        margin-bottom: 10px;
+        border: 1px solid rgba(255,255,255,0.05);
+        box-shadow: 4px 4px 10px rgba(0,0,0,0.3), -4px -4px 10px rgba(255,255,255,0.03);
+        transition: all 0.2s ease-in-out;
+        cursor: pointer;
+    }
+    [data-testid="stSidebar"] div[role="radiogroup"] > label:hover {
+        transform: translateY(-2px);
+        box-shadow: 6px 6px 12px rgba(0,0,0,0.4), -6px -6px 12px rgba(255,255,255,0.04);
+    }
+    [data-testid="stSidebar"] div[role="radiogroup"] > label[data-checked="true"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: inset 4px 4px 10px rgba(0,0,0,0.3);
+        border: none;
+    }
+    [data-testid="stSidebar"] div[role="radiogroup"] > label p {
+        font-weight: 600;
+        font-size: 1.05rem;
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -168,8 +194,18 @@ with st.sidebar:
     page = st.radio("Navigation", ["Home", "Dashboard", "Prediction Engine", "About System"], label_visibility="collapsed")
     st.markdown("---")
     
+    # New sleek system status toggle/indicator
+    st.markdown("### System Status")
     st.markdown("""
-    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; font-size: 0.85rem; color: #94a3b8;">
+    <div style="display:flex; align-items:center; gap: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 8px; box-shadow: inset 2px 2px 5px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.05);">
+        <div style="width: 12px; height: 12px; border-radius: 50%; background: #28c76f; box-shadow: 0 0 8px #28c76f;"></div>
+        <span style="color: #cbd5e1; font-weight: 500; font-size:0.9rem;">Model Engine Active</span>
+    </div>
+    <br>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; font-size: 0.85rem; color: #94a3b8; border: 1px solid rgba(255,255,255,0.1);">
         <b>⚡ PRO TIP:</b><br>
         Use the Dashboard to analyze cohorts before generating specific user predictions.
     </div>
@@ -314,113 +350,173 @@ elif page == "Dashboard":
 # --- PAGE: PREDICTION ENGINE ---
 elif page == "Prediction Engine":
     st.markdown("<h1 style='font-weight: 700;'>Prediction Engine</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='color: #94a3b8;'>Simulate customer profiles to generate real-time AI risk assessments.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #94a3b8;'>Simulate individual customer profiles or upload a dataset for batch AI risk assessments.</p>", unsafe_allow_html=True)
 
     # Mapping readable text to model numeric values
     contract_map = {"Month-to-month": 0, "One year": 1, "Two year": 2}
     internet_map = {"DSL": 0, "Fiber optic": 1, "No Internet Service": 2}
 
-    # Form Card
-    with st.container():
-        st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
-        st.markdown("### 🛠️ Configure Customer Parameters")
-        
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            tenure = st.number_input("Tenure (months)", min_value=0, value=12, help="How many months has the customer stayed?")
-        with col2:
-            monthly_charges = st.number_input("Monthly Charges ($)", min_value=0.0, value=50.0)
-        with col3:
-            total_charges = st.number_input("Total Charges ($)", min_value=0.0, value=600.0)
-        
-        col4, col5 = st.columns(2)
-        with col4:
-            contract_sel = st.selectbox("Contract Type", list(contract_map.keys()))
-        with col5:
-            internet_sel = st.selectbox("Internet Service", list(internet_map.keys()))
+    # Advanced Tabs layout for splitting Single vs Batch Prediction
+    pred_tab1, pred_tab2 = st.tabs(["👤 Single Profile Analysis", "📁 Batch Cohort Scoring"])
+    
+    with pred_tab1:
+        # Form Card
+        with st.container():
+            st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
+            st.markdown("### 🛠️ Configure Customer Parameters")
             
-        st.markdown("</div>", unsafe_allow_html=True)
+            col1, col2 = st.columns(2)
+            with col1:
+                st.markdown("<span style='color:#cbd5e1; font-weight:500;'>Service Specifications</span>", unsafe_allow_html=True)
+                tenure = st.slider("Tenure (months)", min_value=0, max_value=72, value=12, help="How many months has the customer stayed?")
+                contract_sel = st.selectbox("Contract Type", list(contract_map.keys()))
+                internet_sel = st.selectbox("Internet Service", list(internet_map.keys()))
+            with col2:
+                st.markdown("<span style='color:#cbd5e1; font-weight:500;'>Financial Metrics</span>", unsafe_allow_html=True)
+                monthly_charges = st.slider("Monthly Charges ($)", min_value=15.0, max_value=120.0, value=50.0, step=0.5)
+                
+                # Smart dynamic default for total charges
+                est_total = float(monthly_charges * tenure)
+                total_charges = st.slider("Total Charges ($)", min_value=0.0, max_value=10000.0, value=est_total if est_total <= 10000 else 10000.0, step=10.0)
+                
+            st.markdown("</div>", unsafe_allow_html=True)
 
-    contract = contract_map[contract_sel]
-    internet_service = internet_map[internet_sel]
-    
-    if st.button("🚀 Execute Risk Analysis", use_container_width=True):
-        with st.spinner("Connecting to Random Forest Engine..."):
-            # Prepare the features exactly as the model expects
-            df_features = pd.DataFrame([{
-                'tenure': float(tenure),
-                'MonthlyCharges': float(monthly_charges),
-                'TotalCharges': float(total_charges),
-                'Contract': int(contract),
-                'InternetService': int(internet_service)
-            }])
-    
+        contract = contract_map[contract_sel]
+        internet_service = internet_map[internet_sel]
+        
+        if st.button("🚀 Execute Risk Analysis", use_container_width=True):
+            with st.spinner("Connecting to Random Forest Engine..."):
+                # Prepare the features exactly as the model expects
+                df_features = pd.DataFrame([{
+                    'tenure': float(tenure),
+                    'MonthlyCharges': float(monthly_charges),
+                    'TotalCharges': float(total_charges),
+                    'Contract': int(contract),
+                    'InternetService': int(internet_service)
+                }])
+        
+                try:
+                    # Make prediction directly
+                    prediction = model.predict(df_features)
+                    probability = model.predict_proba(df_features)[0][1] * 100 # Get percentage of churn
+                    pred_value = int(prediction[0])
+                    
+                    st.markdown("<hr style='border:1px solid rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
+                    
+                    # Advanced Dashboard Results Layout
+                    res_col1, res_col2 = st.columns([1.5, 1])
+                    
+                    with res_col1:
+                        # Plotly Gauge Chart for Probability
+                        fig_gauge = go.Figure(go.Indicator(
+                            mode = "gauge+number",
+                            value = probability,
+                            number = {'suffix': "%", 'font': {'color': 'white'}},
+                            domain = {'x': [0, 1], 'y': [0, 1]},
+                            title = {'text': "AI Risk Probability", 'font': {'color': '#94a3b8', 'size': 18}},
+                            gauge = {
+                                'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "white"},
+                                'bar': {'color': "rgba(255,255,255,0.3)"},
+                                'bgcolor': "rgba(0,0,0,0.2)",
+                                'borderwidth': 2,
+                                'bordercolor': "rgba(255,255,255,0.1)",
+                                'steps': [
+                                    {'range': [0, 30], 'color': "#28c76f"},   # Green
+                                    {'range': [30, 70], 'color': "#ff9f43"},  # Orange
+                                    {'range': [70, 100], 'color': "#ea5455"}  # Red
+                                ]
+                            }
+                        ))
+                        fig_gauge.update_layout(paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}, height=300)
+                        st.plotly_chart(fig_gauge, use_container_width=True)
+                        
+                    with res_col2:
+                        st.markdown("<br><br>", unsafe_allow_html=True)
+                        if pred_value == 1 or probability > 50:
+                            st.markdown("""
+                            <div style='background: rgba(234, 84, 85, 0.15); border: 1px solid #ea5455; border-radius: 12px; padding: 20px;'>
+                                <h3 style='color: #ea5455; margin-top:0;'>⚠️ High Risk Profile</h3>
+                                <p style='color: #cbd5e1; font-size: 0.95rem;'>Patterns strongly align with historical churn data.</p>
+                                <hr style='border: 0.5px solid rgba(234,84,85,0.3);'>
+                                <b style='color: #fff;'>Action Engine Suggests:</b>
+                                <ul style='color: #cbd5e1; font-size: 0.9rem;'>
+                                    <li>Trigger automated retention email sequence.</li>
+                                    <li>Offer an immediate 10% discount on an annual contract upgrade.</li>
+                                </ul>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        else:
+                            st.markdown("""
+                            <div style='background: rgba(40, 199, 111, 0.15); border: 1px solid #28c76f; border-radius: 12px; padding: 20px;'>
+                                <h3 style='color: #28c76f; margin-top:0;'>✅ Safe Profile</h3>
+                                <p style='color: #cbd5e1; font-size: 0.95rem;'>Customer behavior suggests loyalty and stable revenue.</p>
+                                <hr style='border: 0.5px solid rgba(40,199,111,0.3);'>
+                                <b style='color: #fff;'>Action Engine Suggests:</b>
+                                <ul style='color: #cbd5e1; font-size: 0.9rem;'>
+                                    <li>Maintain standard engagement protocols.</li>
+                                    <li>Flag for potential cross-selling opportunities (e.g., family plans).</li>
+                                </ul>
+                            </div>
+                            """, unsafe_allow_html=True)
+                        
+                except Exception as e:
+                    st.error(f"Error generating prediction: {e}")
+                    
+    with pred_tab2:
+        st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
+        st.markdown("### 📂 Upload Cohort Data for Batch Scoring")
+        st.markdown("<p style='color: #94a3b8; font-size: 0.95rem;'>Upload a CSV containing multiple customers. The engine will rapidly score everyone and provide a downloadable intelligence report.</p>", unsafe_allow_html=True)
+        
+        batch_file = st.file_uploader("Upload CSV File", type=["csv"], key="batch_upload")
+        
+        if batch_file is not None:
             try:
-                # Make prediction directly
-                prediction = model.predict(df_features)
-                probability = model.predict_proba(df_features)[0][1] * 100 # Get percentage of churn
-                pred_value = int(prediction[0])
+                batch_df = pd.read_csv(batch_file)
+                st.markdown("##### 🔍 Data Preview:")
+                st.dataframe(batch_df.head(), use_container_width=True)
                 
-                st.markdown("<hr style='border:1px solid rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
-                
-                # Advanced Dashboard Results Layout
-                res_col1, res_col2 = st.columns([1.5, 1])
-                
-                with res_col1:
-                    # Plotly Gauge Chart for Probability
-                    fig_gauge = go.Figure(go.Indicator(
-                        mode = "gauge+number",
-                        value = probability,
-                        number = {'suffix': "%", 'font': {'color': 'white'}},
-                        domain = {'x': [0, 1], 'y': [0, 1]},
-                        title = {'text': "AI Risk Probability", 'font': {'color': '#94a3b8', 'size': 18}},
-                        gauge = {
-                            'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "white"},
-                            'bar': {'color': "rgba(255,255,255,0.3)"},
-                            'bgcolor': "rgba(0,0,0,0.2)",
-                            'borderwidth': 2,
-                            'bordercolor': "rgba(255,255,255,0.1)",
-                            'steps': [
-                                {'range': [0, 30], 'color': "#28c76f"},   # Green
-                                {'range': [30, 70], 'color': "#ff9f43"},  # Orange
-                                {'range': [70, 100], 'color': "#ea5455"}  # Red
-                            ]
-                        }
-                    ))
-                    fig_gauge.update_layout(paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}, height=300)
-                    st.plotly_chart(fig_gauge, use_container_width=True)
-                    
-                with res_col2:
-                    st.markdown("<br><br>", unsafe_allow_html=True)
-                    if pred_value == 1 or probability > 50:
-                        st.markdown("""
-                        <div style='background: rgba(234, 84, 85, 0.15); border: 1px solid #ea5455; border-radius: 12px; padding: 20px;'>
-                            <h3 style='color: #ea5455; margin-top:0;'>⚠️ High Risk Profile</h3>
-                            <p style='color: #cbd5e1; font-size: 0.95rem;'>Patterns strongly align with historical churn data.</p>
-                            <hr style='border: 0.5px solid rgba(234,84,85,0.3);'>
-                            <b style='color: #fff;'>Action Engine Suggests:</b>
-                            <ul style='color: #cbd5e1; font-size: 0.9rem;'>
-                                <li>Trigger automated retention email sequence.</li>
-                                <li>Offer an immediate 10% discount on an annual contract upgrade.</li>
-                            </ul>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    else:
-                        st.markdown("""
-                        <div style='background: rgba(40, 199, 111, 0.15); border: 1px solid #28c76f; border-radius: 12px; padding: 20px;'>
-                            <h3 style='color: #28c76f; margin-top:0;'>✅ Safe Profile</h3>
-                            <p style='color: #cbd5e1; font-size: 0.95rem;'>Customer behavior suggests loyalty and stable revenue.</p>
-                            <hr style='border: 0.5px solid rgba(40,199,111,0.3);'>
-                            <b style='color: #fff;'>Action Engine Suggests:</b>
-                            <ul style='color: #cbd5e1; font-size: 0.9rem;'>
-                                <li>Maintain standard engagement protocols.</li>
-                                <li>Flag for potential cross-selling opportunities (e.g., family plans).</li>
-                            </ul>
-                        </div>
-                        """, unsafe_allow_html=True)
-                    
+                if st.button("⚡ Run Batch AI Analysis", use_container_width=True, key="batch_btn"):
+                    with st.spinner("Scoring cohort through Random Forest Engine..."):
+                        # Data preprocessing safely
+                        required_cols = ['tenure', 'MonthlyCharges', 'TotalCharges', 'Contract', 'InternetService']
+                        missing_cols = [col for col in required_cols if col not in batch_df.columns]
+                        
+                        if missing_cols:
+                            st.error(f"⚠️ Missing required columns for prediction: **{', '.join(missing_cols)}**")
+                        else:
+                            score_df = batch_df.copy()
+                            # Ensure mappings are correctly formatted for model ingestion
+                            if score_df['Contract'].dtype == 'O':
+                                score_df['Contract'] = score_df['Contract'].map(contract_map).fillna(0)
+                            if score_df['InternetService'].dtype == 'O':
+                                net_map = {"DSL": 0, "Fiber optic": 1, "No": 2, "No Internet Service": 2}
+                                score_df['InternetService'] = score_df['InternetService'].map(net_map).fillna(0)
+                                
+                            score_df['TotalCharges'] = pd.to_numeric(score_df['TotalCharges'], errors='coerce').fillna(0)
+                            
+                            X_batch = score_df[required_cols]
+                            probs = model.predict_proba(X_batch)[:, 1] * 100
+                            
+                            batch_df['Churn_Risk_Score (%)'] = np.round(probs, 1)
+                            batch_df['Risk_Level'] = ['High Risk' if p > 50 else 'Safe' for p in probs]
+                            
+                            st.success("✅ Batch scoring completed successfully!")
+                            st.markdown("<hr style='border:1px solid rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
+                            
+                            res_b1, res_b2 = st.columns([2, 1])
+                            with res_b1:
+                                st.dataframe(batch_df[['tenure', 'MonthlyCharges', 'Contract', 'Churn_Risk_Score (%)', 'Risk_Level']].head(15), use_container_width=True)
+                            with res_b2:
+                                high_risk_count = len(batch_df[batch_df['Risk_Level'] == 'High Risk'])
+                                st.markdown(render_glass_metric("At Risk Accounts", f"{high_risk_count}"), unsafe_allow_html=True)
+                                
+                            csv_export = batch_df.to_csv(index=False).encode('utf-8')
+                            st.download_button(label="📥 Download Scored Cohort Report (CSV)", data=csv_export, file_name="scored_cohort.csv", mime="text/csv", use_container_width=True)
+                            
             except Exception as e:
-                st.error(f"Error generating prediction: {e}")
+                st.error(f"Error processing batch file: {e}")
+                
+        st.markdown("</div>", unsafe_allow_html=True)
 
 # --- PAGE: ABOUT ---
 elif page == "About System":
