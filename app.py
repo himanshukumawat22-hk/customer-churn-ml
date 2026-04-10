@@ -153,10 +153,8 @@ elif page == "Prediction":
     contract = contract_map[contract_sel]
     internet_service = internet_map[internet_sel]
     
-    st.markdown("---")
-
-    if st.button("Analyze Risk Profile", use_container_width=True):
-        with st.spinner("Analyzing data patterns..."):
+    if st.button("🚀 Execute Risk Analysis", use_container_width=True):
+        with st.spinner("Connecting to Random Forest Engine..."):
             # Prepare the features exactly as the model expects
             df_features = pd.DataFrame([{
                 'tenure': float(tenure),
@@ -172,39 +170,86 @@ elif page == "Prediction":
                 probability = model.predict_proba(df_features)[0][1] * 100 # Get percentage of churn
                 pred_value = int(prediction[0])
                 
-                # Visual Probability Result Block
-                st.subheader("🛡️ Prediction Results")
-                res_col1, res_col2 = st.columns([1, 2])
-                with res_col1:
-                    st.metric("Churn Risk Probability", f"{probability:.1f}%")
-                with res_col2:
-                    st.write("Risk Meter")
-                    st.progress(int(probability))
+                st.markdown("<hr style='border:1px solid rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
                 
-                # Display context result
-                if pred_value == 1:
-                    st.error(f"⚠️ **High Risk:** This customer exhibits patterns suggesting they are highly likely to churn. Recommended action: Immediate retention strategy deployment.")
-                else:
-                    st.success(f"✅ **Safe Zone:** This customer is likely to remain. Continue standard engagement protocols.")
+                # Advanced Dashboard Results Layout
+                res_col1, res_col2 = st.columns([1.5, 1])
+                
+                with res_col1:
+                    # Plotly Gauge Chart for Probability
+                    fig_gauge = go.Figure(go.Indicator(
+                        mode = "gauge+number",
+                        value = probability,
+                        number = {'suffix': "%", 'font': {'color': 'white'}},
+                        domain = {'x': [0, 1], 'y': [0, 1]},
+                        title = {'text': "AI Risk Probability", 'font': {'color': '#94a3b8', 'size': 18}},
+                        gauge = {
+                            'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "white"},
+                            'bar': {'color': "rgba(255,255,255,0.3)"},
+                            'bgcolor': "rgba(0,0,0,0.2)",
+                            'borderwidth': 2,
+                            'bordercolor': "rgba(255,255,255,0.1)",
+                            'steps': [
+                                {'range': [0, 30], 'color': "#28c76f"},   # Green
+                                {'range': [30, 70], 'color': "#ff9f43"},  # Orange
+                                {'range': [70, 100], 'color': "#ea5455"}  # Red
+                            ]
+                        }
+                    ))
+                    fig_gauge.update_layout(paper_bgcolor="rgba(0,0,0,0)", font={'color': "white"}, height=300)
+                    st.plotly_chart(fig_gauge, use_container_width=True)
+                    
+                with res_col2:
+                    st.markdown("<br><br>", unsafe_allow_html=True)
+                    if pred_value == 1 or probability > 50:
+                        st.markdown("""
+                        <div style='background: rgba(234, 84, 85, 0.15); border: 1px solid #ea5455; border-radius: 12px; padding: 20px;'>
+                            <h3 style='color: #ea5455; margin-top:0;'>⚠️ High Risk Profile</h3>
+                            <p style='color: #cbd5e1; font-size: 0.95rem;'>Patterns strongly align with historical churn data.</p>
+                            <hr style='border: 0.5px solid rgba(234,84,85,0.3);'>
+                            <b style='color: #fff;'>Action Engine Suggests:</b>
+                            <ul style='color: #cbd5e1; font-size: 0.9rem;'>
+                                <li>Trigger automated retention email sequence.</li>
+                                <li>Offer an immediate 10% discount on an annual contract upgrade.</li>
+                            </ul>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.markdown("""
+                        <div style='background: rgba(40, 199, 111, 0.15); border: 1px solid #28c76f; border-radius: 12px; padding: 20px;'>
+                            <h3 style='color: #28c76f; margin-top:0;'>✅ Safe Profile</h3>
+                            <p style='color: #cbd5e1; font-size: 0.95rem;'>Customer behavior suggests loyalty and stable revenue.</p>
+                            <hr style='border: 0.5px solid rgba(40,199,111,0.3);'>
+                            <b style='color: #fff;'>Action Engine Suggests:</b>
+                            <ul style='color: #cbd5e1; font-size: 0.9rem;'>
+                                <li>Maintain standard engagement protocols.</li>
+                                <li>Flag for potential cross-selling opportunities (e.g., family plans).</li>
+                            </ul>
+                        </div>
+                        """, unsafe_allow_html=True)
                     
             except Exception as e:
                 st.error(f"Error generating prediction: {e}")
 
-elif page == "About":
-    st.title("About This AI Tool ℹ️")
-    st.markdown("---")
+elif page == "About System":
+    st.markdown("<h1 style='font-weight: 700;'>System Architecture</h1>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
     st.write("""
-    This robust application is engineered to grant telecommunications businesses a strategic advantage by proactively identifying churn threats.
+    <div class="glass-card">
+        <p>This robust application is engineered to grant telecommunications businesses a strategic advantage by proactively identifying churn threats.</p>
     
-    ### 🧠 Machine Learning Engine
-    **Algorithm:** `Random Forest Classifier`
+        <h3>🧠 Machine Learning Engine</h3>
+        <p><b>Algorithm:</b> <code>Random Forest Classifier</code></p>
     
-    ### 🔑 Core Features Analyzed:
-    *   **Tenure:** Customer longevity and loyalty scope.
-    *   **Financials:** Monthly Charges vs. Total Charges to map spending tolerance.
-    *   **Contract Lifecycle:** Analyzes Month-to-Month vs. Annual commitment weights.
-    *   **Service Infrastructure:** Factoring in specific dependencies (DSL, Fiber, etc.).
+        <h3>🔑 Core Features Analyzed:</h3>
+        <ul>
+            <li><b>Tenure:</b> Customer longevity and loyalty scope.</li>
+            <li><b>Financials:</b> Monthly Charges vs. Total Charges to map spending tolerance.</li>
+            <li><b>Contract Lifecycle:</b> Analyzes Month-to-Month vs. Annual commitment weights.</li>
+            <li><b>Service Infrastructure:</b> Factoring in specific dependencies (DSL, Fiber, etc.).</li>
+        </ul>
     
-    **Mission Statement:**  
-    *To empower customer retention teams to turn reactive losses into proactive conversions.*
-    """)
+        <hr style="border:1px solid rgba(255,255,255,0.1)">
+        <p><b>Mission Statement:</b> <i>To empower customer retention teams to turn reactive losses into proactive conversions.</i></p>
+    </div>
+    """, unsafe_allow_html=True)
