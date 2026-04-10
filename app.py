@@ -3,139 +3,328 @@ import streamlit as st
 import pickle
 import pandas as pd
 import os
+import plotly.express as px
+import plotly.graph_objects as go
 
 # Configure page settings - MUST BE FIRST
-st.set_page_config(page_title="Customer Churn AI", page_icon="🔮", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="ChurnAI | Predict & Retain", page_icon="⚡", layout="wide", initial_sidebar_state="expanded")
 
 # Inject custom CSS for advanced UI styling
 st.markdown("""
     <style>
-    .main {
-        background-color: #f4f6f9;
+    /* Premium SaaS Dark Theme & Glassmorphism */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Inter', sans-serif;
     }
-    div[data-testid="stMetricValue"] {
-        font-size: 2rem;
-        color: #1f77b4;
+    
+    /* Main Background Gradient */
+    [data-testid="stAppViewContainer"] {
+        background: radial-gradient(circle at top left, #1a1a2e 0%, #0f2027 50%, #203a43 100%);
+        color: #e2e8f0;
     }
-    .stButton>button {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-        color: white;
+    
+    /* Sidebar Styling */
+    [data-testid="stSidebar"] {
+        background: rgba(15, 32, 39, 0.6) !important;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Buttons Styling */
+    div.stButton > button:first-child {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: #ffffff;
         font-weight: 600;
         border: none;
         border-radius: 8px;
-        padding: 10px 24px;
+        padding: 0.6rem 1.5rem;
         transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
     }
-    .stButton>button:hover {
+    div.stButton > button:first-child:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 15px rgba(0, 242, 254, 0.4);
+        box-shadow: 0 8px 25px rgba(118, 75, 162, 0.5);
+    }
+    
+    /* File Uploader styling */
+    [data-testid="stFileUploader"] section {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px dashed rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+    }
+    
+    /* Tabs Styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 20px;
+        background-color: transparent;
+    }
+    .stTabs [data-baseweb="tab"] {
+        height: 50px;
+        white-space: pre-wrap;
+        background-color: transparent;
+        border-radius: 4px 4px 0 0;
+        gap: 1px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        color: #94a3b8;
+        font-weight: 500;
+    }
+    .stTabs [aria-selected="true"] {
+        color: #fff !important;
+        border-bottom: 2px solid #667eea !important;
+    }
+    
+    /* Glass Cards Content */
+    .glass-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 16px;
+        padding: 24px;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        transition: transform 0.3s ease;
+    }
+    .glass-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+    .metric-title {
+        color: #94a3b8;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+    }
+    .metric-value {
+        color: #ffffff;
+        font-size: 2.2rem;
+        font-weight: 700;
+        margin: 0;
+        background: -webkit-linear-gradient(45deg, #fff, #94a3b8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
     }
     </style>
 """, unsafe_allow_html=True)
 
+
+# --- HELPERS & COMPONENTS ---
+
+def render_glass_metric(title, value):
+    """Renders a sleek glassmorphism metric card."""
+    return f"""
+    <div class="glass-card">
+        <div class="metric-title">{title}</div>
+        <div class="metric-value">{value}</div>
+    </div>
+    """
+
+def generate_ai_insights(df):
+    """Generates dynamic AI-like insights based on the uploaded data."""
+    insights = []
+    if 'Churn' in df.columns:
+        churn_rate = (len(df[df['Churn'] == 'Yes']) / len(df)) * 100 if df['Churn'].dtype == 'O' else (len(df[df['Churn'] == 1]) / len(df)) * 100
+        insights.append(f"🔍 **Macro Trend:** The baseline churn rate is currently at **{churn_rate:.1f}%**. Industry average for telcos sits around 20-25%.")
+    
+    if 'Contract' in df.columns and 'Churn' in df.columns:
+        # Rough heuristic insight
+        month_to_month = df[df['Contract'] == 'Month-to-month']
+        if not month_to_month.empty:
+            m2m_churn = (len(month_to_month[month_to_month['Churn'] == 'Yes']) / len(month_to_month)) * 100 if df['Churn'].dtype == 'O' else (len(month_to_month[month_to_month['Churn'] == 1]) / len(month_to_month)) * 100
+            insights.append(f"⚠️ **Risk Segment:** Customers on **Month-to-Month contracts** have an elevated churn rate of **{m2m_churn:.1f}%**. Consider incentivizing annual upgrades.")
+            
+    if 'Tenure' in df.columns or 'tenure' in df.columns:
+        t_col = 'Tenure' if 'Tenure' in df.columns else 'tenure'
+        new_users = df[df[t_col] <= 6]
+        if not new_users.empty and 'Churn' in df.columns:
+            new_churn = (len(new_users[new_users['Churn'] == 'Yes']) / len(new_users)) * 100 if df['Churn'].dtype == 'O' else (len(new_users[new_users['Churn'] == 1]) / len(new_users)) * 100
+            insights.append(f"📊 **Cohort Alert:** Customers in their first 6 months have a churn risk of **{new_churn:.1f}%**. Early onboarding engagement is critical.")
+            
+    if not insights:
+        insights.append("Upload a dataset with 'Churn', 'Contract', and 'tenure' columns to unlock AI insights.")
+        
+    return insights
+
+
 # Load the trained machine learning model
-base_dir = os.path.dirname(os.path.abspath(__file__))
-model_path = os.path.join(base_dir, "model.pkl")
-model = pickle.load(open(model_path, "rb"))
+@st.cache_resource
+def load_model():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(base_dir, "model.pkl")
+    return pickle.load(open(model_path, "rb")), base_dir
+
+model, base_dir = load_model()
 
 # Sidebar Navigation
-st.sidebar.title("🔮 Navigation")
-st.sidebar.markdown("---")
-page = st.sidebar.radio("Go to", ["Home", "Dashboard", "Prediction", "About"])
-st.sidebar.markdown("---")
-st.sidebar.info("Upload data, analyze historical trends, and predict churn using AI.")
-
-if page == "Home":
-    st.title("Customer Churn AI Assistant 🤖")
-    st.markdown("### Welcome to the Next-Gen Telecommunications Churn Predictor!")
+with st.sidebar:
+    st.image("https://cdn-icons-png.flaticon.com/512/6105/6105565.png", width=60) # Placeholder AI Logo
+    st.markdown("## **ChurnAI** Workspace")
+    st.markdown("---")
+    page = st.radio("Navigation", ["Home", "Dashboard", "Prediction Engine", "About System"], label_visibility="collapsed")
     st.markdown("---")
     
-    col1, col2 = st.columns(2)
-    with col1:
-        st.write("#### Why use this app?")
-        st.write("""
-        This powerful tool helps telecommunication businesses identify customers who are highly likely to leave (churn). 
-        By identifying these customers early, companies can intervene, offer targeted promotions, and retain their business.
-        """)
-    with col2:
-        st.info("""
-        **🚀 Quick Start Guide:**
-        1. Go to the **Prediction** tab via the sidebar.
-        2. Enter the customer's billing & service info.
-        3. Click Predict to generate a real-time AI risk assessment.
-        """)
-        
-    with st.expander("📊 Analyze custom historical data?"):
-        st.write("Navigate to the **Dashboard** page. There, you can upload your own customized CSV file to uncover metrics, evaluate feature distributions, and browse your raw customer data securely.")
+    st.markdown("""
+    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; font-size: 0.85rem; color: #94a3b8;">
+        <b>⚡ PRO TIP:</b><br>
+        Use the Dashboard to analyze cohorts before generating specific user predictions.
+    </div>
+    """, unsafe_allow_html=True)
 
-elif page == "Dashboard":
-    st.title("Data Analytics Dashboard 📊")
-    st.write("Explore historical customer data or upload your own dataset to analyze churn patterns.")
+
+# --- PAGE: HOME ---
+if page == "Home":
+    st.markdown("<h1 style='font-weight: 700; letter-spacing: -1px;'>Predict & Prevent Customer Churn.</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #94a3b8; font-size: 1.2rem; margin-bottom: 30px;'>Turn reactive losses into proactive retention with enterprise-grade machine learning.</p>", unsafe_allow_html=True)
     
-    uploaded_file = st.file_uploader("Upload custom customer data (CSV format)", type=["csv"], help="Your data should preferably contain columns like 'Churn', 'Contract', etc. to match standard visuals.")
+    # Hero Section Grid
+    col1, col2 = st.columns([1.2, 1])
+    with col1:
+        st.markdown("""
+        <div class="glass-card">
+            <h3 style="margin-top: 0; color: #fff;">Why use ChurnAI?</h3>
+            <p style="color: #cbd5e1; line-height: 1.6;">
+            Acquiring a new customer can cost five times more than retaining an existing one. 
+            ChurnAI connects your historical telecommunications data with advanced Random Forest algorithms 
+            to identify at-risk accounts <b>before</b> they cancel their subscriptions.
+            </p>
+            <ul style="color: #cbd5e1; line-height: 1.8;">
+                <li><b>Analyze:</b> Deep dive into cohort distributions and financial impacts.</li>
+                <li><b>Predict:</b> Generate real-time risk gauges for individual customers.</li>
+                <li><b>Act:</b> Deploy targeted retention strategies powered by data.</li>
+            </ul>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with col2:
+        st.markdown("""
+        <div class="glass-card" style="border-top: 4px solid #667eea;">
+            <h3 style="margin-top: 0; color: #fff;">🚀 Quick Start</h3>
+            <ol style="color: #cbd5e1; line-height: 2;">
+                <li>Navigate to the <b>Dashboard</b> tab.</li>
+                <li>Upload your latest customer CSV file.</li>
+                <li>Review auto-generated <b>AI Insights</b>.</li>
+                <li>Head to the <b>Prediction Engine</b> to score high-value accounts.</li>
+            </ol>
+        </div>
+        """, unsafe_allow_html=True)
+
+
+# --- PAGE: DASHBOARD ---
+elif page == "Dashboard":
+    st.markdown("<h1 style='font-weight: 700;'>Data Analytics Workspace</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #94a3b8;'>Analyze macro trends, view visual cohort breakdowns, and extract AI Insights.</p>", unsafe_allow_html=True)
+    
+    # Toolbar
+    with st.container():
+        uploaded_file = st.file_uploader("📂 Upload Custom Dataset (CSV)", type=["csv"], help="Expected columns: Churn, Contract, tenure, MonthlyCharges, etc.")
     
     df = None
     if uploaded_file is not None:
         try:
             df = pd.read_csv(uploaded_file)
-            st.success(f"Successfully loaded custom dataset with {len(df):,} records!")
+            st.toast(f"Successfully loaded {len(df):,} records!", icon="✅")
         except Exception as e:
             st.error(f"Error reading custom file: {e}")
     else:
         csv_path = os.path.join(base_dir, "telco.csv")
         if os.path.exists(csv_path):
             df = pd.read_csv(csv_path)
-            st.info("Currently displaying default dataset (`telco.csv`). Upload a file above to visualize custom data.")
+            st.markdown("<span style='color:#667eea; font-size:0.9rem;'>● Displaying default dataset (telco.csv)</span>", unsafe_allow_html=True)
         else:
-            st.warning("Historical data file (telco.csv) not found. Please upload a CSV file to continue.")
+            st.error("Default data file not found. Please upload a CSV.")
             
     if df is not None:
-        st.markdown("---")
-        # Advanced UI Tabs for organized dashboard
-        tab1, tab2, tab3 = st.tabs(["📈 Overview Metrics", "📊 Visualizations", "🗃️ Data Explorer"])
+        # SaaS KPI Row
+        col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+        with col_m1:
+            st.markdown(render_glass_metric("Total Customers", f"{len(df):,}"), unsafe_allow_html=True)
+        with col_m2:
+            if 'Churn' in df.columns:
+                churn_c = len(df[df['Churn'] == 'Yes']) if df['Churn'].dtype == 'O' else len(df[df['Churn'] == 1])
+                st.markdown(render_glass_metric("Global Churn Rate", f"{(churn_c/len(df))*100:.1f}%"), unsafe_allow_html=True)
+            else:
+                st.markdown(render_glass_metric("Global Churn Rate", "N/A"), unsafe_allow_html=True)
+        with col_m3:
+            if 'MonthlyCharges' in df.columns:
+                st.markdown(render_glass_metric("Avg MRR / User", f"${df['MonthlyCharges'].mean():.2f}"), unsafe_allow_html=True)
+            else:
+                st.markdown(render_glass_metric("Avg MRR", "N/A"), unsafe_allow_html=True)
+        with col_m4:
+            if 'TotalCharges' in df.columns:
+                tc = pd.to_numeric(df['TotalCharges'], errors='coerce').sum()
+                st.markdown(render_glass_metric("Total Lifetime Value", f"${tc/1000000:.2f}M"), unsafe_allow_html=True)
+            else:
+                st.markdown(render_glass_metric("Lifetime Value", "N/A"), unsafe_allow_html=True)
+                
+        # Main Content Tabs
+        tab1, tab2, tab3 = st.tabs(["📊 Interactive Visuals", "🧠 AI Insights & Segmentation", "🗃️ Raw Data Export"])
         
         with tab1:
-            col_m1, col_m2, col_m3 = st.columns(3)
-            col_m1.metric("Total Customers Recorded", f"{len(df):,}")
-            if 'Churn' in df.columns:
-                # Check mapping safely (whether the data is encoded to 0/1 or raw text Yes/No)
-                churn_count = len(df[df['Churn'] == 'Yes']) if df['Churn'].dtype == 'O' else len(df[df['Churn'] == 1])
-                churn_rate = (churn_count / len(df)) * 100
-                col_m2.metric("Overall Churn Rate", f"{churn_rate:.1f}%")
-            if 'MonthlyCharges' in df.columns:
-                avg_charge = df['MonthlyCharges'].mean()
-                col_m3.metric("Avg Monthly Revenue Per User", f"${avg_charge:.2f}")
-                
-        with tab2:
+            st.markdown("<br>", unsafe_allow_html=True)
             col_c1, col_c2 = st.columns(2)
             with col_c1:
                 if 'Churn' in df.columns:
-                    st.subheader("Customer Churn Distribution")
-                    st.bar_chart(df['Churn'].value_counts(), color="#ff4b4b")
+                    churn_counts = df['Churn'].value_counts().reset_index()
+                    churn_counts.columns = ['Churn', 'Count']
+                    fig_churn = px.pie(churn_counts, values='Count', names='Churn', hole=0.6, 
+                                       title="Churn Distribution", 
+                                       color_discrete_sequence=["#667eea", "#ea5455"])
+                    fig_churn.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#cbd5e1")
+                    st.plotly_chart(fig_churn, use_container_width=True)
                 else:
-                    st.warning("Column 'Churn' missing from uploaded data.")
+                    st.info("No 'Churn' column found.")
             with col_c2:
                 if 'Contract' in df.columns:
-                    st.subheader("Contract Types")
-                    st.bar_chart(df['Contract'].value_counts(), color="#4b8bff")
+                    contract_counts = df['Contract'].value_counts().reset_index()
+                    contract_counts.columns = ['Contract Type', 'Customers']
+                    fig_contract = px.bar(contract_counts, x='Contract Type', y='Customers',
+                                          title="Cohort by Contract Type",
+                                          color='Contract Type',
+                                          color_discrete_sequence=["#4facfe", "#43e97b", "#fa709a"])
+                    fig_contract.update_layout(paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font_color="#cbd5e1", showlegend=False)
+                    st.plotly_chart(fig_contract, use_container_width=True)
                 else:
-                    st.warning("Column 'Contract' missing from uploaded data.")
+                    st.info("No 'Contract' column found.")
                     
         with tab3:
-            st.subheader("Raw Data Preview")
+            st.markdown("<br>### Secure Data Viewer", unsafe_allow_html=True)
             st.dataframe(df.head(100), use_container_width=True)
+            csv_data = df.to_csv(index=False).encode('utf-8')
+            st.download_button(label="📥 Download Full Report (CSV)",
+                               data=csv_data,
+                               file_name="churn_report.csv",
+                               mime="text/csv")
+                               
+        with tab2:
+            st.markdown("<br>", unsafe_allow_html=True)
+            insights = generate_ai_insights(df)
+            for ins in insights:
+                st.markdown(f"""
+                <div class="glass-card" style="border-left: 4px solid #4facfe;">
+                    {ins}
+                </div>
+                """, unsafe_allow_html=True)
 
-elif page == "Prediction":
-    st.title("Predict Customer Churn 🔮")
-    st.write("Enter the customer's billing and service details below to evaluate their risk profile.")
+
+# --- PAGE: PREDICTION ENGINE ---
+elif page == "Prediction Engine":
+    st.markdown("<h1 style='font-weight: 700;'>Prediction Engine</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #94a3b8;'>Simulate customer profiles to generate real-time AI risk assessments.</p>", unsafe_allow_html=True)
 
     # Mapping readable text to model numeric values
     contract_map = {"Month-to-month": 0, "One year": 1, "Two year": 2}
     internet_map = {"DSL": 0, "Fiber optic": 1, "No Internet Service": 2}
 
-    # Advanced layout card for inputs
+    # Form Card
     with st.container():
-        st.markdown("### 📋 Customer Profile")
+        st.markdown("<div class='glass-card'>", unsafe_allow_html=True)
+        st.markdown("### 🛠️ Configure Customer Parameters")
+        
         col1, col2, col3 = st.columns(3)
         with col1:
             tenure = st.number_input("Tenure (months)", min_value=0, value=12, help="How many months has the customer stayed?")
@@ -149,6 +338,8 @@ elif page == "Prediction":
             contract_sel = st.selectbox("Contract Type", list(contract_map.keys()))
         with col5:
             internet_sel = st.selectbox("Internet Service", list(internet_map.keys()))
+            
+        st.markdown("</div>", unsafe_allow_html=True)
 
     contract = contract_map[contract_sel]
     internet_service = internet_map[internet_sel]
@@ -231,6 +422,7 @@ elif page == "Prediction":
             except Exception as e:
                 st.error(f"Error generating prediction: {e}")
 
+# --- PAGE: ABOUT ---
 elif page == "About System":
     st.markdown("<h1 style='font-weight: 700;'>System Architecture</h1>", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
