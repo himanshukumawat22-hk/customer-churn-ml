@@ -207,25 +207,17 @@ model, base_dir = load_model()
 
 # Sidebar Navigation
 with st.sidebar:
-    # Gamified User Profile
-    st.markdown("""
-    <div style="background: rgba(0, 242, 254, 0.05); border: 1px solid rgba(0, 242, 254, 0.2); padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 15px; margin-bottom: 20px; box-shadow: 0 0 15px rgba(0,242,254,0.1);">
-        <img src="https://cdn-icons-png.flaticon.com/512/4140/4140048.png" style="width: 50px; border-radius: 50%; border: 2px solid #00f2fe;">
-        <div>
-            <div style="color: #00f2fe; font-family: 'Orbitron', sans-serif; font-size: 1.1rem; font-weight: 700;">AGENT 007</div>
-            <div style="color: #94a3b8; font-size: 0.8rem; text-transform: uppercase;">Rank: Master Analyst</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("<h2 style='font-family:Orbitron;'>TERMINAL MENU</h2>", unsafe_allow_html=True)
+    st.markdown("<h2 style='font-family:Orbitron;'>MAIN MENU</h2>", unsafe_allow_html=True)
     st.markdown("---")
-    page = st.radio("Navigation", ["Home", "Dashboard", "Prediction Engine", "About System"], label_visibility="collapsed")
+    page = st.radio("Navigation", [
+        "Home", 
+        "Dashboard", 
+        "Prediction Engine",
+        "Model Metrics",
+        "Settings",
+        "About System"
+    ], label_visibility="collapsed")
     st.markdown("---")
-    
-    # Global Threat Level Metric
-    st.markdown(render_glass_metric("Global Threat Level", "DEFCON 3"), unsafe_allow_html=True)
-    st.markdown("<br>", unsafe_allow_html=True)
     
     # New sleek system status toggle/indicator
     st.markdown("<h3 style='font-family:Orbitron; font-size:1rem; color:#cbd5e1;'>SYSTEM STATUS</h3>", unsafe_allow_html=True)
@@ -255,7 +247,7 @@ if page == "Home":
     with col1:
         st.markdown("""
         <div class="glass-card" style="border-left: 4px solid #00f2fe;">
-            <h3 style="margin-top: 0; color: #fff; font-family:Orbitron;">Mission Objective</h3>
+            <h3 style="margin-top: 0; color: #fff; font-family:Orbitron;">System Overview</h3>
             <p style="color: #cbd5e1; line-height: 1.6;">
             Acquiring a new customer can cost five times more than retaining an existing one. 
             ChurnAI connects your historical telecommunications data with advanced Random Forest algorithms 
@@ -272,7 +264,7 @@ if page == "Home":
     with col2:
         st.markdown("""
         <div class="glass-card" style="background: rgba(0,242,254,0.05); border: 1px solid rgba(0,242,254,0.2);">
-            <h3 style="margin-top: 0; color: #00f2fe; font-family:Orbitron;">🚀 Initialization Protocol</h3>
+            <h3 style="margin-top: 0; color: #00f2fe; font-family:Orbitron;">🚀 Quick Start Guide</h3>
             <ol style="color: #cbd5e1; line-height: 2;">
                 <li>Navigate to the <b>Dashboard</b> tab.</li>
                 <li>Upload your latest customer CSV file.</li>
@@ -580,9 +572,21 @@ elif page == "Prediction Engine":
                 
         st.markdown("</div>", unsafe_allow_html=True)
 
+# --- PAGE: MODEL METRICS ---
+elif page == "Model Metrics":
+    st.markdown("<h1 style='font-family:Orbitron; font-weight: 700; color:#00f2fe;'>Model Performance Metrics</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #94a3b8;'>View backend Random Forest hyperparameters and feature importance rankings.</p>", unsafe_allow_html=True)
+    st.info("Coming soon: Dynamic ROC curves, precision/recall distributions, and confusion matrices will be deployed here.")
+
+# --- PAGE: SETTINGS ---
+elif page == "Settings":
+    st.markdown("<h1 style='font-family:Orbitron; font-weight: 700; color:#00f2fe;'>System Settings</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #94a3b8;'>Configure your ChurnAI workspace and integrations.</p>", unsafe_allow_html=True)
+    st.info("Coming soon: API key management, email retention webhooks, and custom UI color toggles.")
+
 # --- PAGE: ABOUT ---
 elif page == "About System":
-    st.markdown("<h1 style='font-family:Orbitron; font-weight: 700;'>System Architecture</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='font-family:Orbitron; font-weight: 700; color:#00f2fe;'>System Architecture</h1>", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
     st.write("""
     <div class="glass-card">
